@@ -67,7 +67,7 @@ Rules:
 - Every image field has a **required** `alt` string with validation. Decorative images use an explicit "decorative" boolean instead of empty alt.
 - Every document with a page has `slug` (required, unique) and an `seo` object (title, description, OG image), each falling back to sensible defaults.
 - Relationships use references (a story references places), never duplicated text.
-- Opportunity status is never stored; it is derived from dates at render time ("closing soon" = closes within 14 days; confirm the window with the client).
+- Opportunity status is never stored; it is derived from dates at render time. "Closing soon" means the close date is within `CLOSING_SOON_DAYS` (14) days. That value lives as a single named constant in `src/lib/constants.ts`; never repeat the number elsewhere.
 
 ### StoryMap embeds
 
@@ -85,17 +85,21 @@ Rules:
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `sand` | `#F5F1EA` | Page background. Text colour on dark sections. |
+| `sand` | `#F5F1EA` | Page background. Text colour on dark sections and on Tide buttons. |
 | `deep` | `#0B2530` | Body and headline text. Background of dark sections. |
-| `tide` | `#2F7F79` | Accent only: eyebrow numbers, rules, focus rings, links' underline, icons, buttons. **Never body text.** |
-| `mist` | `#8A958F` | Secondary, non-essential marks on Sand. See contrast note. |
-| `rule` | `rgba(11,37,48,0.12)` | Hairline rules and dividers. On Deep, use Sand at the same opacity. |
+| `tide` | `#276E69` | Accent on Sand only: eyebrow numbers, links, focus rings, buttons, accent rules. Accent only, never body copy. **Never used on Deep.** |
+| `tide-light` | `#6FB8B0` | Accent inside Deep sections only (eyebrow numbers, links, focus rings). Never used on Sand. |
+| `mist` | `#8A958F` | **Decorative only:** rules, icons, non-text marks. Never text. |
+| `mist-ink` | `#5E6A64` | Secondary text on Sand: captions, metadata, labels, dates. |
+| `rule` | `rgba(11,37,48,0.12)` | Hairline rules and dividers on Sand. On Deep, use `rule-deep` (Sand at 0.16). |
 
 **Measured contrast (WCAG 2.x):**
-- Deep on Sand: about 14:1. Passes everything.
-- Tide on Sand: about 4.2:1. **Fails AA for normal text.** Tide text only at large sizes (24px+, or 18.66px+ bold) and for non-text UI (3:1 needed). Tide buttons use Sand text only at large/bold sizes, or a Deep label.
-- Mist on Sand: about 2.8:1. **Fails AA even for large text.** Do not use Mist for any text a reader needs (metadata, captions, labels). Use Deep at reduced emphasis via weight/size, or propose a darker `mist-ink` token (for example `#5E6A64`, about 5:1) for approval before using it.
-- Mist on Deep: about 5:1, fine for secondary text in dark sections. Tide on Deep: about 3.4:1, large text and UI only.
+- Deep on Sand: about 14:1.
+- Tide on Sand, and Sand text on a Tide button: about 5.3:1. Passes AA at all text sizes.
+- Mist-ink on Sand: about 5:1. Passes AA at all text sizes.
+- Tide-light on Deep: about 6.9:1. Passes AA at all text sizes.
+- Mist on Sand: about 2.8:1. Fails, which is why it is decorative only.
+- Secondary text inside Deep sections uses Sand at reduced opacity (0.72 or higher, about 8:1), not Mist.
 
 **Type** (Google Fonts via `next/font/google`, self-hosted, `display: swap`, latin + latin-ext subsets, only the weights actually used):
 - **Instrument Sans**: display and headlines.
@@ -123,7 +127,7 @@ Rules:
 
 **Accessibility (WCAG 2.2 AA):**
 - Semantic HTML: one `h1` per page, landmark elements, real `<button>` and `<a>`, lists as lists.
-- Full keyboard navigation, skip-to-content link, visible focus states (Tide ring with offset, never `outline: none` without a replacement).
+- Full keyboard navigation, skip-to-content link, visible focus states (Tide ring with offset on Sand, Tide-light ring in Deep sections, never `outline: none` without a replacement).
 - Alt text required on every CMS image field (enforced in schema validation).
 - Forms: visible labels, error messages tied with `aria-describedby`, success and failure announced.
 - Mobile nav is a proper disclosure with focus management and Escape to close.
@@ -151,5 +155,7 @@ Apply to UI strings, placeholder copy, alt text examples, metadata, commit messa
 - **Verify before saying done.** Run `npm run lint`, `npm run typecheck` and `npm run build`. Fix every error. Report the actual results, including anything skipped or still failing.
 - **Commit after each completed task** with a clear, imperative message describing what changed and why. One task, one commit.
 - **Never commit secrets. Never hardcode keys.**
+- **Accounts and credentials belong to the owner.** Never run `sanity login`, `sanity init`, `vercel login`, create projects, datasets, tokens or webhooks, or sign up for any service. Stop, give exact step-by-step instructions (what to click, which values to copy, which env variable names to fill), and wait.
+- **Dev-only routes** (such as the design system preview at `/dev/*`) must call `notFound()` when `process.env.NODE_ENV === 'production'`, and are excluded from the sitemap.
 - Keep components small and colocated by feature. Shared UI in `src/components/`, Sanity client, queries and types in `src/sanity/`, schemas in `src/sanity/schemas/`, utilities in `src/lib/`.
 - Prefer the platform: server components, server actions for forms, URL state for filters, native HTML elements before custom widgets.

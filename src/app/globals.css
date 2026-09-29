@@ -1,26 +1,127 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Paper & Ink tokens. Contrast figures and usage rules live in CLAUDE.md.
+ * Never use raw hex values in components; use these utilities.
+ */
+@theme {
+  --color-*: initial;
+  --color-sand: #f5f1ea;
+  --color-deep: #0b2530;
+  --color-tide: #276e69; /* accent on Sand only, never on Deep */
+  --color-tide-light: #6fb8b0; /* accent inside Deep sections only */
+  --color-mist: #8a958f; /* decorative only: rules, icons, never text */
+  --color-mist-ink: #5e6a64; /* secondary text on Sand */
+  --color-rule: rgb(11 37 48 / 0.12);
+  --color-rule-deep: rgb(245 241 234 / 0.16);
+  --color-transparent: transparent;
+  --color-current: currentColor;
 }
 
+/* Font families come from next/font CSS variables set on <html>. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-body: var(--font-raleway), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --focus-ring: var(--color-tide);
+    color-scheme: light;
+  }
+
+  /* Dark editorial sections: Deep background, Sand text, Tide-light accents. */
+  [data-surface="deep"] {
+    --focus-ring: var(--color-tide-light);
+    background-color: var(--color-deep);
+    color: var(--color-sand);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-sand);
+    color: var(--color-deep);
+    font-family: var(--font-body);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-deep);
+    color: var(--color-sand);
+  }
+
+  [data-surface="deep"] ::selection {
+    background-color: var(--color-sand);
+    color: var(--color-deep);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
+
+  /* Anchor targets clear a future sticky header. */
+  [id] {
+    scroll-margin-top: 6rem;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .skip-link {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-deep);
+    color: var(--color-sand);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transform: translateY(-200%);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline-color: var(--color-tide-light);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
