@@ -120,6 +120,8 @@ No Raleway italic is loaded, so body emphasis uses weight 600. Latin only means 
 - Generous whitespace. Full-bleed field photography.
 - Dark sections: Deep background, Sand text.
 
+**Components** live in `src/components/ui/` (Container, Grid, Text, Eyebrow, Headline, Rule, Button, PhotoBlock, BigNumber, DeepSection, Reveal). Preview them at `/dev/system` in development. Use surface-aware colour utilities in components: `text-ink`, `text-muted`, `text-accent`, `bg-accent`, `text-on-accent`, `border-line`, `bg-surface`. They switch automatically inside `DeepSection`, which is how Tide stays off Deep. Use raw palette utilities (`text-tide`, `bg-deep`) only where a colour must not change with the surface.
+
 **Motion:** subtle, purposeful scroll reveals only (short opacity/translate fades). Implemented with CSS and a tiny IntersectionObserver hook, no animation library. Under `prefers-reduced-motion: reduce`, everything is visible immediately with no movement. Content must never be hidden if JS fails.
 
 ## 5. Quality bar
