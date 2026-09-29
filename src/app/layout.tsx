@@ -7,10 +7,11 @@ import {
 } from "next/font/google";
 import "./globals.css";
 
-// Display and body are preloaded; serif accent and mono load on first use to save mobile data.
+// All four preloaded; payload kept small with latin only and fixed weights. See CLAUDE.md "Type".
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument-sans",
-  subsets: ["latin", "latin-ext"],
+  weight: ["500", "600"],
+  subsets: ["latin"],
   display: "swap",
 });
 
@@ -18,21 +19,21 @@ const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
   weight: "400",
   style: "italic",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   display: "swap",
-  preload: false,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
-  subsets: ["latin", "latin-ext"],
+  weight: "400",
+  subsets: ["latin"],
   display: "swap",
-  preload: false,
 });
 
 const raleway = Raleway({
   variable: "--font-raleway",
-  subsets: ["latin", "latin-ext"],
+  weight: ["400", "600"],
+  subsets: ["latin"],
   display: "swap",
 });
 

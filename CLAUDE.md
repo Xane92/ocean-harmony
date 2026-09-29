@@ -101,11 +101,16 @@ Rules:
 - Mist on Sand: about 2.8:1. Fails, which is why it is decorative only.
 - Secondary text inside Deep sections uses Sand at reduced opacity (0.72 or higher, about 8:1), not Mist.
 
-**Type** (Google Fonts via `next/font/google`, self-hosted, `display: swap`, latin + latin-ext subsets, only the weights actually used):
-- **Instrument Sans**: display and headlines.
-- **Instrument Serif, italic**: exactly one accent word per headline, never more, never body copy.
-- **JetBrains Mono**: eyebrows, labels, metadata, dates, counts. Uppercase, tracked.
-- **Raleway**: body copy. Comfortable measure (about 60 to 72 characters), generous line height.
+**Type** (Google Fonts via `next/font/google`, self-hosted, all four preloaded, `display: swap`, `latin` subset only). These are the only weights loaded; do not use any other weight or style in components, and do not add one without approval:
+
+| Font | Weights / style | Use |
+| --- | --- | --- |
+| **Instrument Sans** | 500, 600 (normal) | 500: display and headlines. 600: nav, buttons, small headings. |
+| **Instrument Serif** | 400 italic | Exactly one accent word per headline, never more, never body copy. |
+| **JetBrains Mono** | 400 (normal) | Eyebrows, labels, metadata, dates, counts. Uppercase, tracked. |
+| **Raleway** | 400, 600 (normal) | 400: body copy. 600: emphasis and strong text. Comfortable measure (about 60 to 72 characters), generous line height. |
+
+No Raleway italic is loaded, so body emphasis uses weight 600. Latin only means characters such as Ɛ and Ɔ (used in Fante and Twi) render in a fallback font; if the client's copy needs them, add `latin-ext` (approval required).
 
 **Signatures:**
 - Mono eyebrow with a Tide number above each section headline (`01 / Approach`).
@@ -155,6 +160,7 @@ Apply to UI strings, placeholder copy, alt text examples, metadata, commit messa
 - **Verify before saying done.** Run `npm run lint`, `npm run typecheck` and `npm run build`. Fix every error. Report the actual results, including anything skipped or still failing.
 - **Commit after each completed task** with a clear, imperative message describing what changed and why. One task, one commit.
 - **Never commit secrets. Never hardcode keys.**
+- **Never delete or overwrite files without asking. Move them to /_archive instead.**
 - **Accounts and credentials belong to the owner.** Never run `sanity login`, `sanity init`, `vercel login`, create projects, datasets, tokens or webhooks, or sign up for any service. Stop, give exact step-by-step instructions (what to click, which values to copy, which env variable names to fill), and wait.
 - **Dev-only routes** (such as the design system preview at `/dev/*`) must call `notFound()` when `process.env.NODE_ENV === 'production'`, and are excluded from the sitemap.
 - Keep components small and colocated by feature. Shared UI in `src/components/`, Sanity client, queries and types in `src/sanity/`, schemas in `src/sanity/schemas/`, utilities in `src/lib/`.
