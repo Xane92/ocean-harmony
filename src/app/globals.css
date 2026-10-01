@@ -179,6 +179,20 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
+  /* Home hero photo settles from a slight zoom on load. Off under reduced motion. */
+  .hero-settle {
+    animation: hero-settle 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes hero-settle {
+    from {
+      transform: scale(1.04);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,5 @@
 import { cx } from "@/lib/cx";
+import { marked } from "./Marked";
 
 type HeadlineSize = "display" | "h1" | "h2" | "h3";
 
@@ -39,12 +40,12 @@ export function Headline({
   return (
     <Tag id={id} className={cx("font-display font-medium text-ink", sizeClass[size], className)}>
       {index === -1 || !accentWord ? (
-        text
+        marked(text)
       ) : (
         <>
-          {text.slice(0, index)}
+          {marked(text.slice(0, index))}
           <em className="font-serif font-normal tracking-normal">{accentWord}</em>
-          {text.slice(index + accentWord.length)}
+          {marked(text.slice(index + accentWord.length))}
         </>
       )}
     </Tag>
