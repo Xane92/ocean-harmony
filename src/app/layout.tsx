@@ -5,8 +5,6 @@ import {
   JetBrains_Mono,
   Raleway,
 } from "next/font/google";
-import { Footer } from "@/components/site/Footer";
-import { Header } from "@/components/site/Header";
 import "./globals.css";
 
 // All four preloaded; payload kept small with latin only and fixed weights. See CLAUDE.md "Type".
@@ -61,16 +59,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${instrumentSans.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} ${raleway.variable}`}
     >
-      <body className="flex min-h-dvh flex-col">
-        <a href="#main" className="skip-link" data-shell-inert>
-          Skip to content
-        </a>
-        <Header />
-        <main id="main" tabIndex={-1} data-shell-inert className="flex flex-1 flex-col outline-none">
-          {children}
-        </main>
-        <Footer />
-      </body>
+      <body className="flex min-h-dvh flex-col">{children}</body>
     </html>
   );
 }

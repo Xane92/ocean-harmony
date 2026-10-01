@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
 import { NotFoundContent } from "@/components/site/NotFoundContent";
-import { SiteShell } from "@/components/site/SiteShell";
 
 export const metadata: Metadata = {
   title: "Page not found",
   robots: { index: false },
 };
 
-// Unmatched URLs render under the root layout only, so this one adds the site shell itself.
+// notFound() thrown inside a public page: the site layout already provides the shell.
 export default function NotFound() {
-  return (
-    <SiteShell>
-      <NotFoundContent />
-    </SiteShell>
-  );
+  return <NotFoundContent />;
 }
