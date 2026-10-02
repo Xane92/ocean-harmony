@@ -7,7 +7,7 @@ export function Wordmark({ className }: { className?: string }) {
     <Link
       href="/"
       className={cx(
-        "inline-flex min-h-11 items-center font-display text-[1.25rem] font-semibold tracking-[-0.02em] text-ink",
+        "inline-flex min-h-11 shrink-0 items-center whitespace-nowrap font-display text-[clamp(1.0625rem,0.9rem+0.8vw,1.25rem)] font-semibold tracking-[-0.02em] text-ink",
         className,
       )}
     >

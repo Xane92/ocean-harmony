@@ -110,7 +110,7 @@ export function Header() {
           hidden && "-translate-y-full",
         )}
       >
-        <div className="mx-auto flex h-16 w-full max-w-page items-center justify-between gap-6 px-(--gutter) lg:h-20">
+        <div className="mx-auto flex h-16 w-full max-w-page items-center justify-between gap-4 px-(--gutter) lg:h-20 lg:gap-6">
           <Wordmark />
 
           <nav aria-label="Primary" className="hidden lg:block">
@@ -138,7 +138,7 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <Button href={supportLink.href} className="hidden lg:inline-flex">
+            <Button href={supportLink.href} className="max-lg:hidden">
               {supportLink.label}
             </Button>
             <button
@@ -179,42 +179,42 @@ export function Header() {
         )}
       >
         <div className="flex min-h-full flex-col justify-between gap-12 px-(--gutter) pt-10 pb-10">
-          <nav aria-label="Menu">
-            <ol className="flex flex-col">
-              {primaryNav.map((item, index) => {
-                const active = isActivePath(pathname, item.href);
-                return (
-                  <li key={item.href} className="border-b border-line">
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      onClick={() => setOpen(false)}
-                      className="flex min-h-11 items-baseline gap-4 py-3"
-                    >
-                      <span className="w-6 font-mono text-caption text-accent">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span
-                        className={cx(
-                          "font-display text-h2 font-medium text-ink",
-                          active && "underline decoration-accent decoration-2 underline-offset-8",
-                        )}
+          <div className="flex flex-col gap-8">
+            <nav aria-label="Menu">
+              <ol className="flex flex-col">
+                {primaryNav.map((item, index) => {
+                  const active = isActivePath(pathname, item.href);
+                  return (
+                    <li key={item.href} className="border-b border-line">
+                      <Link
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => setOpen(false)}
+                        className="flex min-h-11 items-baseline gap-4 py-3"
                       >
-                        {item.label}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ol>
-          </nav>
-
-          <div className="flex flex-col gap-6">
-            <Button href={supportLink.href} onClick={() => setOpen(false)} className="w-full sm:w-auto sm:self-start">
+                        <span className="w-6 font-mono text-caption text-accent">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span
+                          className={cx(
+                            "font-display text-h2 font-medium text-ink",
+                            active && "underline decoration-accent decoration-2 underline-offset-8",
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+            <Button href={supportLink.href} onClick={() => setOpen(false)} className="w-full">
               {supportLink.label}
             </Button>
-            <SocialLinks />
           </div>
+
+          <SocialLinks />
         </div>
       </div>
     </>
