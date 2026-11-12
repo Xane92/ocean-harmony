@@ -10,13 +10,12 @@ import { Statement } from "@/components/home/Statement";
 import { SupportPartner } from "@/components/home/SupportPartner";
 import { Reveal } from "@/components/ui/Reveal";
 import { getHomeContent } from "@/content/home";
-import { urlFor } from "@/sanity/image";
+import { toPhoto } from "@/content/media";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { content, seo } = await getHomeContent();
-  const ogImage = seo?.image?.asset
-    ? urlFor(seo.image).width(1200).height(630).fit("crop").url()
-    : content.hero.photo?.src;
+  const seoPhoto = toPhoto(seo?.image);
+  const ogImage = seoPhoto?.src ?? content.hero.photo?.src;
 
   return {
     title: { absolute: seo?.title ?? "Ocean Harmony Initiative" },
@@ -25,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       url: "/",
-      images: ogImage ? [{ url: ogImage, alt: seo?.image?.alt ?? content.hero.photo?.alt }] : undefined,
+      images: ogImage ? [{ url: ogImage, alt: seoPhoto?.alt ?? content.hero.photo?.alt }] : undefined,
     },
   };
 }

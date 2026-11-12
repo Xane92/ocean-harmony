@@ -1,103 +1,172 @@
-import type { SanityImageSource } from "@sanity/image-url";
+import "server-only";
 import { cache } from "react";
-import { sanityFetch } from "@/sanity/client";
-import { urlFor } from "@/sanity/image";
-import { homePageQuery } from "@/sanity/queries";
-import type { HomePageQueryResult } from "@/sanity/types";
-import { homeFallback, type HomeContent, type HomeStory } from "./fallback";
-import type { Photo } from "./photos";
+import { opportunityState } from "@/lib/opportunity";
+import { publicClient } from "@/lib/supabase/public";
+import type { HomeRow, OpportunityRow, PlaceRow, Seo, StoredImage, StoryMapRow } from "@/lib/supabase/types";
+import { homeFallback, type HomeContent, type HomeOpportunity, type HomePlace, type HomeStory } from "./fallback";
+import { toPhoto } from "./media";
 
-type SanityPhoto = {
-  asset: unknown;
-  hotspot?: { x?: number | null; y?: number | null } | null;
-  alt?: string | null;
-  caption?: string | null;
-  lqip?: string | null;
-  dimensions?: { width?: number | null; height?: number | null } | null;
-} | null;
+// Home page content: Supabase where the client's team has filled it in, the local fallback
+// everywhere else. A section switches to CMS content only once it has something published,
+// and any query error falls back too, so a paused or unreachable database never breaks the page.
 
-/** Sanity image with alt text to the Photo shape the home components use. Null when unusable. */
-function toPhoto(image: SanityPhoto | undefined): Photo | null {
-  if (!image?.asset || !image.alt) return null;
-  const { hotspot } = image;
-  return {
-    src: urlFor(image as SanityImageSource).width(2400).fit("max").url(),
-    alt: image.alt,
-    width: image.dimensions?.width ?? 2400,
-    height: image.dimensions?.height ?? 1600,
-    caption: image.caption ?? undefined,
-    position:
-      hotspot?.x != null && hotspot?.y != null
-        ? `${Math.round(hotspot.x * 100)}% ${Math.round(hotspot.y * 100)}%`
-        : undefined,
-    blurDataURL: image.lqip ?? undefined,
-  };
-}
-
-// Mirrors the story type list in the Sanity schema, without pulling Studio code into the page bundle.
 const storyTypeLabels: Record<string, string> = {
-  fieldStory: "Field story",
-  communityVoice: "Community voice",
-  photoEssay: "Photo essay",
+  field_story: "Field story",
+  community_voice: "Community voice",
+  photo_essay: "Photo essay",
   video: "Video",
 };
 
-type HomeSeo = NonNullable<HomePageQueryResult>["seo"];
+const placeStatusLabels: Record<PlaceRow["place_status"], string> = {
+  active: "Active",
+  upcoming: "Upcoming",
+  past: "Past",
+};
 
-async function fetchHome(): Promise<HomePageQueryResult | null> {
+const opportunityTypeLabels: Record<OpportunityRow["opportunity_type"], string> = {
+  volunteer: "Volunteer",
+  fellowship: "Fellowship",
+  internship: "Internship",
+  program: "Program",
+};
+
+type FeaturedStory = {
+  id: string;
+  title: string;
+  slug: string;
+  story_type: string;
+  hero_image: StoredImage | null;
+  place: { name: string } | null;
+};
+
+type HomeData = {
+  home: HomeRow | null;
+  storyMap: StoryMapRow | null;
+  stories: FeaturedStory[];
+  places: PlaceRow[];
+  opportunities: OpportunityRow[];
+  pillars: string[];
+};
+
+async function fetchHome(): Promise<HomeData | null> {
+  const db = publicClient(["home", "approach", "storymaps", "stories", "places", "opportunities"]);
+  if (!db) return null;
+
   try {
-    return await sanityFetch({ query: homePageQuery, tags: ["homePage", "storyMap", "story", "place"] });
+    const [home, approach, places, opportunities] = await Promise.all([
+      db.from("home").select("*").eq("id", 1).maybeSingle<HomeRow>(),
+      db.from("approach").select("pillars").eq("id", 1).maybeSingle<{ pillars: { title?: string }[] }>(),
+      db.from("places").select("*").order("sort_order").returns<PlaceRow[]>(),
+      db.from("opportunities").select("*").order("closes_on", { ascending: true, nullsFirst: false }).returns<OpportunityRow[]>(),
+    ]);
+    for (const r of [home, approach, places, opportunities]) if (r.error) throw r.error;
+
+    const row = home.data;
+    const [storyMap, stories] = await Promise.all([
+      row?.featured_storymap_id
+        ? db.from("storymaps").select("*").eq("id", row.featured_storymap_id).maybeSingle<StoryMapRow>()
+        : Promise.resolve({ data: null, error: null }),
+      row?.featured_story_ids?.length
+        ? db
+            .from("stories")
+            .select("id, title, slug, story_type, hero_image, place:places(name)")
+            .in("id", row.featured_story_ids)
+            .returns<FeaturedStory[]>()
+        : Promise.resolve({ data: [] as FeaturedStory[], error: null }),
+    ]);
+    if (storyMap.error) throw storyMap.error;
+    if (stories.error) throw stories.error;
+
+    // Keep the editor's chosen order.
+    const order = row?.featured_story_ids ?? [];
+    const sorted = [...(stories.data ?? [])].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+
+    return {
+      home: row,
+      storyMap: storyMap.data,
+      stories: sorted,
+      places: places.data ?? [],
+      opportunities: opportunities.data ?? [],
+      pillars: (approach.data?.pillars ?? []).map((p) => p.title?.trim() ?? "").filter(Boolean),
+    };
   } catch (error) {
-    // The page must still render if Sanity is unreachable; fall back to local content.
-    console.error("Home: Sanity fetch failed, using fallback content.", error);
+    console.error("Home: Supabase fetch failed, using fallback content.", error);
     return null;
   }
 }
 
-/** Home page content: the Sanity home document where filled in, the local fallback everywhere else. */
-export const getHomeContent = cache(async (): Promise<{ content: HomeContent; seo: HomeSeo | null }> => {
-  const doc = await fetchHome();
+export const getHomeContent = cache(async (): Promise<{ content: HomeContent; seo: Seo | null }> => {
+  const data = await fetchHome();
   const fb = homeFallback;
-  if (!doc) return { content: fb, seo: null };
+  if (!data) return { content: fb, seo: null };
 
-  const heroPhoto = toPhoto(doc.heroImage);
-  const heroFromCms = Boolean(doc.heroHeadline);
+  const { home } = data;
+  const heroFromCms = Boolean(home?.hero_headline);
 
-  const map = doc.featuredStoryMap;
-  const stories: HomeStory[] = (doc.featuredStories ?? [])
-    .filter((s): s is NonNullable<typeof s> => Boolean(s?.title && s.slug))
-    .map((s) => ({
-      title: s.title as string,
-      kind: (s.storyType && storyTypeLabels[s.storyType]) || "Story",
-      place: s.place?.name ?? "",
-      href: `/stories/${s.slug}`,
-      photo: toPhoto(s.heroImage),
+  const stories: HomeStory[] = data.stories.map((s) => ({
+    title: s.title,
+    kind: storyTypeLabels[s.story_type] ?? "Story",
+    place: s.place?.name ?? "",
+    href: `/stories/${s.slug}`,
+    photo: toPhoto(s.hero_image),
+  }));
+
+  const places: HomePlace[] = data.places.map((p) => ({
+    name: p.name,
+    country: p.country ?? undefined,
+    status: placeStatusLabels[p.place_status],
+    note: p.summary ?? undefined,
+  }));
+  const countries = new Set(data.places.map((p) => p.country?.trim().toLowerCase()).filter(Boolean)).size;
+
+  const opportunities: HomeOpportunity[] = data.opportunities
+    .map((o) => ({ o, state: opportunityState(o.opens_on, o.closes_on) }))
+    .filter(({ state }) => state.label !== "Closed")
+    .slice(0, 4)
+    .map(({ o, state }) => ({
+      title: o.title,
+      kind: opportunityTypeLabels[o.opportunity_type],
+      status: state.label,
+      open: state.open,
+      href: `/opportunities/${o.slug}`,
     }));
 
+  const map = data.storyMap;
+
   return {
-    seo: doc.seo,
+    seo: home?.seo ?? null,
     content: {
       ...fb,
       hero: {
         ...fb.hero,
-        headline: doc.heroHeadline ?? fb.hero.headline,
+        headline: home?.hero_headline ?? fb.hero.headline,
         // A CMS headline only gets the accent word chosen for it in the CMS.
-        accentWord: heroFromCms ? (doc.heroAccentWord ?? undefined) : fb.hero.accentWord,
-        intro: doc.heroIntro ?? fb.hero.intro,
-        photo: heroPhoto ?? fb.hero.photo,
+        accentWord: heroFromCms ? (home?.hero_accent_word ?? undefined) : fb.hero.accentWord,
+        intro: home?.hero_intro ?? fb.hero.intro,
+        photo: toPhoto(home?.hero_image) ?? fb.hero.photo,
       },
-      explore: map?.title
+      approach: data.pillars.length > 0 ? { ...fb.approach, pillars: data.pillars } : fb.approach,
+      places:
+        places.length > 0
+          ? {
+              ...fb.places,
+              items: places,
+              count: countries > 0 ? { value: String(countries), label: countries === 1 ? "Country" : "Countries" } : fb.places.count,
+            }
+          : fb.places,
+      explore: map
         ? {
             ...fb.explore,
             storyMap: {
               title: map.title,
               summary: map.summary ?? "",
-              url: map.url ?? null,
-              poster: toPhoto(map.posterImage) ?? fb.explore.storyMap.poster,
+              url: map.url,
+              poster: toPhoto(map.poster_image) ?? fb.explore.storyMap.poster,
             },
           }
         : fb.explore,
       stories: stories.length > 0 ? { ...fb.stories, items: stories } : fb.stories,
+      opportunities: opportunities.length > 0 ? { ...fb.opportunities, items: opportunities } : fb.opportunities,
     },
   };
 });

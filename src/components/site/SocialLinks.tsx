@@ -1,10 +1,11 @@
-import { socials } from "@/lib/site";
+import { socials, type NavItem } from "@/lib/site";
 import { cx } from "@/lib/cx";
 
-export function SocialLinks({ className }: { className?: string }) {
+/** Defaults to the built-in links; the footer passes the ones from site settings. */
+export function SocialLinks({ className, items = socials }: { className?: string; items?: NavItem[] }) {
   return (
     <ul className={cx("flex flex-wrap gap-x-6 gap-y-2", className)}>
-      {socials.map((item) => (
+      {items.map((item) => (
         <li key={item.href}>
           <a
             href={item.href}

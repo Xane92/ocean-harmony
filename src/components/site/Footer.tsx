@@ -4,7 +4,8 @@ import { Container, Grid } from "@/components/ui/Container";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Headline } from "@/components/ui/Headline";
 import { Rule } from "@/components/ui/Rule";
-import { contactLink, partnerLink, primaryNav, supportLink, whatsappHref, type NavItem } from "@/lib/site";
+import { getSiteSettings } from "@/content/settings";
+import { contactLink, partnerLink, primaryNav, supportLink, type NavItem } from "@/lib/site";
 import { SocialLinks } from "./SocialLinks";
 import { Wordmark } from "./Wordmark";
 
@@ -24,16 +25,18 @@ const columns: { title: string; links: NavItem[] }[] = [
 const linkClass =
   "inline-flex min-h-11 items-center text-ink underline decoration-transparent underline-offset-[6px] hover:decoration-accent";
 
-export function Footer() {
-  const whatsapp = whatsappHref();
+export async function Footer() {
+  const settings = await getSiteSettings();
+  const whatsapp = settings.whatsapp;
+  const closing = settings.closingLine;
   const year = new Date().getFullYear();
 
   return (
     <footer data-surface="deep" data-shell-inert className="pt-20 pb-10 md:pt-32">
       <Container className="flex flex-col gap-16 md:gap-24">
         <div className="flex flex-col gap-8">
-          <Eyebrow label="[PLACEHOLDER] Closing line" />
-          <Headline level={2} size="h1" text="Stay close to the shore" accentWord="shore" className="max-w-[18ch]" />
+          {!closing.fromCms && <Eyebrow label="[PLACEHOLDER] Closing line" />}
+          <Headline level={2} size="h1" text={closing.text} accentWord={closing.accentWord} className="max-w-[18ch]" />
           <div className="flex flex-wrap gap-4">
             <Button href={partnerLink.href}>{partnerLink.label}</Button>
             <Button href={supportLink.href} variant="secondary">
@@ -82,7 +85,7 @@ export function Footer() {
                 )}
               </li>
             </ul>
-            <SocialLinks className="mt-6" />
+            <SocialLinks className="mt-6" items={settings.socials} />
           </div>
         </Grid>
 
