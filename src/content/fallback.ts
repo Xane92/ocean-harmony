@@ -201,7 +201,7 @@ export const homeFallback: HomeContent = {
       show: "[PLACEHOLDER: campaign and station]",
       duration: "[PLACEHOLDER: length]",
     },
-    link: { label: "Listen to the radio campaigns", href: "/stories" },
+    link: { label: "Listen to the radio campaigns", href: "/stories?type=radio" },
   },
   opportunities: {
     eyebrow: "Opportunities",
