@@ -16,6 +16,8 @@ type Ctx = {
   options: ReferenceOptions;
   /** Storage folder for uploads, the content type's table. */
   folder: string;
+  /** New, unsaved item: the web address follows the title until the editor types their own. */
+  isNew?: boolean;
 };
 
 export function slugify(text: string) {
@@ -26,6 +28,23 @@ export function slugify(text: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+/**
+ * On new items, keep each slug field in step with its source field while the slug is empty
+ * or still equals the slug made from the previous title. Saved items never change their slug
+ * on their own, because that would break links people already shared.
+ */
+function withSlugs(fields: Field[], values: Values, name: string, next: unknown, isNew?: boolean): Values {
+  const out: Values = { ...values, [name]: next };
+  if (!isNew) return out;
+  for (const f of fields) {
+    if (f.kind !== "slug" || f.from !== name) continue;
+    const current = typeof values[f.name] === "string" ? (values[f.name] as string) : "";
+    const before = typeof values[name] === "string" ? slugify(values[name] as string) : "";
+    if (!current || current === before) out[f.name] = slugify(typeof next === "string" ? next : "");
+  }
+  return out;
 }
 
 /** Renders the fields of one level (a document, a list item or a group). */
@@ -52,7 +71,7 @@ export function FieldList({
           siblings={values}
           path={path ? `${path}.${field.name}` : field.name}
           ctx={ctx}
-          onChange={(v) => onChange({ ...values, [field.name]: v })}
+          onChange={(v) => onChange(withSlugs(fields, values, field.name, v, ctx.isNew))}
         />
       ))}
     </div>

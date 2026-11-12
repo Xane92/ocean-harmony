@@ -117,7 +117,7 @@ export function DocumentEditor({
         fields={type.fields}
         values={values}
         path=""
-        ctx={{ errors, options, folder: type.table }}
+        ctx={{ errors, options, folder: type.table, isNew: !id && !type.singleton }}
         onChange={(v) => {
           setValues(v);
           setDirty(true);
